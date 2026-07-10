@@ -1,6 +1,6 @@
 :root {
     --bg-color: #0f172a;
-    --panel-bg: rgba(30, 41, 59, 0.7);
+    --panel-bg: rgba(15, 23, 42, 0.4);
     --border-color: rgba(255, 255, 255, 0.1);
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
@@ -17,13 +17,66 @@
     font-family: 'Outfit', sans-serif;
 }
 
+/* Hide default cursor on desktop */
+@media (min-width: 768px) {
+    body, a, button, input, label, select, .hoverable {
+        cursor: none !important;
+    }
+}
+
 body {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    background-color: var(--bg-color); /* Vanta covers this */
     color: var(--text-primary);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     padding: 2rem 0;
+    overflow-x: hidden;
+}
+
+/* Custom Cursor */
+.custom-cursor {
+    position: fixed;
+    top: 0; left: 0;
+    width: 8px; height: 8px;
+    background-color: #60a5fa;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s, height 0.2s, background-color 0.2s;
+}
+
+.cursor-follower {
+    position: fixed;
+    top: 0; left: 0;
+    width: 40px; height: 40px;
+    border: 1px solid rgba(96, 165, 250, 0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s, border-color 0.3s, background-color 0.3s;
+}
+
+.cursor-hover .custom-cursor {
+    width: 0px;
+    height: 0px;
+}
+.cursor-hover .cursor-follower {
+    width: 60px;
+    height: 60px;
+    border-color: #c084fc;
+    background-color: rgba(192, 132, 252, 0.15);
+    backdrop-filter: blur(2px);
+}
+
+/* Vanta Background */
+#vanta-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0;
 }
 
 .container {
@@ -69,7 +122,7 @@ header p {
 
 .glass-panel {
     background: var(--panel-bg);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
     border: 1px solid var(--border-color);
     border-radius: 1.5rem;
     padding: 2.5rem;
@@ -90,7 +143,6 @@ header p {
     padding: 3rem 2rem;
     text-align: center;
     transition: all 0.3s ease;
-    cursor: pointer;
 }
 
 .upload-section.dragover {
@@ -125,12 +177,7 @@ header p {
     border: none;
     color: var(--accent);
     font-weight: 600;
-    cursor: pointer;
     font-size: 1rem;
-}
-
-#browse-btn:hover {
-    text-decoration: underline;
 }
 
 /* Option Grid */
@@ -162,7 +209,6 @@ header p {
     border-radius: 0.75rem;
     padding: 1rem;
     text-align: center;
-    cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
@@ -196,7 +242,7 @@ header p {
     font-weight: 400;
 }
 
-.image-container img {
+.image-container img:not(.step-img) {
     max-width: 100%;
     max-height: 400px;
     border-radius: 0.75rem;
@@ -248,7 +294,6 @@ header p {
     margin-bottom: 1rem;
 }
 .resize-options label {
-    cursor: pointer;
     font-weight: 300;
     color: var(--text-primary);
 }
@@ -297,7 +342,6 @@ header p {
     border-radius: 0.75rem;
     font-size: 1.1rem;
     font-weight: 600;
-    cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.5);
 }
@@ -314,7 +358,6 @@ header p {
 
 .secondary-btn {
     display: inline-block;
-    margin-top: 1.5rem;
     padding: 0.75rem 1.5rem;
     border: 1px solid var(--border-color);
     background: rgba(255, 255, 255, 0.05);
@@ -404,7 +447,6 @@ header p {
     color: var(--text-primary);
     font-size: 1.1rem;
     font-weight: 500;
-    cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -462,4 +504,83 @@ footer {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Before / After Slider */
+.slider-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+.slider-container img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 0;
+}
+#slider-after {
+    position: absolute;
+    top: 0; left: 0;
+    clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+}
+.slider-handle {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: rgba(255,255,255,0.8);
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 10;
+}
+.slider-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 32px; height: 32px;
+    background: #60a5fa;
+    border: 2px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* Stats Panel */
+.stats-panel {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    animation: fadeIn 0.5s ease;
+}
+.stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.stat-box.highlight .stat-value {
+    color: #4ade80;
 }

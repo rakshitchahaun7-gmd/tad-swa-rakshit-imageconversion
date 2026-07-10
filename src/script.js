@@ -1,22 +1,62 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize Vanta Background
+    try {
+        VANTA.NET({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x60a5fa,
+            backgroundColor: 0x0f172a,
+            points: 12.00,
+            maxDistance: 22.00,
+            spacing: 16.00
+        });
+    } catch (e) {
+        console.log("Vanta JS failed to load, falling back to CSS background", e);
+    }
+
+    // 2. Custom Cursor Logic
+    const cursor = document.getElementById('custom-cursor');
+    const follower = document.getElementById('cursor-follower');
+    
+    if (window.innerWidth > 768) {
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            follower.style.left = e.clientX + 'px';
+            follower.style.top = e.clientY + 'px';
+        });
+
+        const hoverables = document.querySelectorAll('.hoverable, button, a, input, label, select');
+        hoverables.forEach(el => {
+            el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+            el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+        });
+    } else {
+        cursor.style.display = 'none';
+        follower.style.display = 'none';
+    }
+
+    // Existing Elements
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
     const browseBtn = document.getElementById('browse-btn');
-    
     const previewSection = document.getElementById('preview-section');
     const originalImage = document.getElementById('original-image');
-    
     const convertBtn = document.getElementById('convert-btn');
     const loader = document.getElementById('loader');
-    
     const resultContainer = document.getElementById('result-container');
     const convertedImage = document.getElementById('converted-image');
     const downloadLink = document.getElementById('download-link');
-
     const optionCards = document.querySelectorAll('.option-card');
     const faqQuestions = document.querySelectorAll('.faq-question');
 
-    // Resize UI Elements
+    // Resize UI
     const resizeRadios = document.querySelectorAll('input[name="resize-mode"]');
     const pixelsInputs = document.getElementById('resize-pixels-inputs');
     const percentInputs = document.getElementById('resize-percent-inputs');
@@ -25,8 +65,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const widthInput = document.getElementById('resize-width');
     const heightInput = document.getElementById('resize-height');
 
+    // Slider UI
+    const sliderContainer = document.getElementById('slider-container');
+    const sliderBefore = document.getElementById('slider-before');
+    const sliderAfter = document.getElementById('slider-after');
+    const sliderHandle = document.getElementById('slider-handle');
+    
+    // Stats UI
+    const statsPanel = document.getElementById('stats-panel');
+    const statOriginal = document.getElementById('stat-original');
+    const statConverted = document.getElementById('stat-converted');
+    const statSavingsBox = document.getElementById('stat-savings-box');
+    const statSavings = document.getElementById('stat-savings');
+
     let currentFile = null;
     let originalImageObj = new Image();
+    let originalFileSize = 0;
+
+    // Helper: Format Bytes
+    function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    }
 
     // Handle Option Cards
     optionCards.forEach(card => {
@@ -44,12 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const mode = e.target.value;
             pixelsInputs.classList.add('hidden');
             percentInputs.classList.add('hidden');
-            
-            if (mode === 'pixels') {
-                pixelsInputs.classList.remove('hidden');
-            } else if (mode === 'percent') {
-                percentInputs.classList.remove('hidden');
-            }
+            if (mode === 'pixels') pixelsInputs.classList.remove('hidden');
+            else if (mode === 'percent') percentInputs.classList.remove('hidden');
         });
     });
 
@@ -102,13 +162,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         currentFile = file;
+        originalFileSize = file.size;
         
-        // Display Original Image and prefill resolution
         const reader = new FileReader();
         reader.onload = (e) => {
             originalImage.src = e.target.result;
+            sliderBefore.src = e.target.result;
             
-            // Set image to get native resolution
             originalImageObj.src = e.target.result;
             originalImageObj.onload = () => {
                 widthInput.value = originalImageObj.width;
@@ -123,19 +183,55 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.readAsDataURL(file);
     }
 
+    // Interactive Slider Logic
+    let isSliderDragging = false;
+    
+    function moveSlider(clientX) {
+        const rect = sliderContainer.getBoundingClientRect();
+        let x = clientX - rect.left;
+        if (x < 0) x = 0;
+        if (x > rect.width) x = rect.width;
+        
+        const percent = (x / rect.width) * 100;
+        sliderAfter.style.clipPath = `polygon(0 0, ${percent}% 0, ${percent}% 100%, 0 100%)`;
+        sliderHandle.style.left = `${percent}%`;
+    }
+
+    sliderContainer.addEventListener('mousedown', (e) => {
+        isSliderDragging = true;
+        moveSlider(e.clientX);
+    });
+    window.addEventListener('mousemove', (e) => {
+        if (isSliderDragging) moveSlider(e.clientX);
+    });
+    window.addEventListener('mouseup', () => {
+        isSliderDragging = false;
+    });
+    // Touch support for slider
+    sliderContainer.addEventListener('touchstart', (e) => {
+        isSliderDragging = true;
+        moveSlider(e.touches[0].clientX);
+    });
+    window.addEventListener('touchmove', (e) => {
+        if (isSliderDragging) {
+            e.preventDefault(); 
+            moveSlider(e.touches[0].clientX);
+        }
+    }, { passive: false });
+    window.addEventListener('touchend', () => {
+        isSliderDragging = false;
+    });
+
     // Handle API Call
     convertBtn.addEventListener('click', async () => {
         if (!currentFile) return;
 
         const checkedRadio = document.querySelector('input[name="conversion-type"]:checked');
         const conversionType = checkedRadio ? checkedRadio.value : 'to-jpg';
-        
         const resizeMode = document.querySelector('input[name="resize-mode"]:checked').value;
 
         convertBtn.disabled = true;
         loader.classList.remove('hidden');
-        
-        // Add 3D Flip animation to original image while processing
         originalImage.classList.add('is-processing');
 
         try {
@@ -165,10 +261,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const resultBlob = await response.blob();
+            const newFileSize = resultBlob.size;
             const objectUrl = URL.createObjectURL(resultBlob);
             
-            convertedImage.src = objectUrl;
+            // Setup File Stats
+            statOriginal.textContent = formatBytes(originalFileSize);
+            statConverted.textContent = formatBytes(newFileSize);
             
+            if (newFileSize < originalFileSize) {
+                const savings = Math.round(((originalFileSize - newFileSize) / originalFileSize) * 100);
+                statSavings.textContent = `${savings}% 🎉`;
+                statSavingsBox.classList.remove('hidden');
+            } else {
+                statSavingsBox.classList.add('hidden');
+            }
+            statsPanel.classList.remove('hidden');
+
             let ext = "jpg";
             if (conversionType === "to-png") ext = "png";
             else if (conversionType === "to-pdf") ext = "pdf";
@@ -177,9 +285,23 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadLink.href = objectUrl;
             downloadLink.download = `converted.${ext}`;
             
+            // Setup Slider or Single Image
+            if (currentFile.type === 'application/pdf' || conversionType === 'to-pdf') {
+                sliderContainer.classList.add('hidden');
+                convertedImage.src = objectUrl;
+                convertedImage.classList.remove('hidden');
+            } else {
+                convertedImage.classList.add('hidden');
+                sliderContainer.classList.remove('hidden');
+                sliderAfter.src = objectUrl;
+                
+                // Reset slider position to 50%
+                sliderAfter.style.clipPath = `polygon(0 0, 50% 0, 50% 100%, 0 100%)`;
+                sliderHandle.style.left = `50%`;
+            }
+            
             resultContainer.classList.remove('hidden');
             
-            // Allow 3D animation to finish a cycle smoothly before stopping
             setTimeout(() => {
                 originalImage.classList.remove('is-processing');
                 resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
