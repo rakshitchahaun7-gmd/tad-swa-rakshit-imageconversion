@@ -19,7 +19,7 @@
 
         <main class="glass-panel">
             <div class="upload-section" id="drop-zone">
-                <input type="file" id="file-input" accept="image/*" hidden>
+                <input type="file" id="file-input" accept="image/*,application/pdf" hidden>
                 <div class="upload-content">
                     <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                     <p>Drag and drop an image here</p>
@@ -34,7 +34,14 @@
                 </div>
                 
                 <div class="action-bar">
-                    <button id="convert-btn" class="primary-btn">Convert to Grayscale (JPEG)</button>
+                    <select id="conversion-type" class="glass-select">
+                        <option value="grayscale">To Grayscale (JPEG)</option>
+                        <option value="to-pdf">Image to PDF</option>
+                        <option value="pdf-to-jpg">PDF to JPG</option>
+                        <option value="to-png">To PNG</option>
+                        <option value="to-jpg">To JPG</option>
+                    </select>
+                    <button id="convert-btn" class="primary-btn">Convert</button>
                     <div id="loader" class="loader hidden"></div>
                 </div>
 

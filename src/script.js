@@ -46,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function handleFile(file) {
-        if (!file.type.startsWith('image/')) {
-            alert('Please select a valid image file.');
+        if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+            alert('Please select a valid image or PDF file.');
             return;
         }
 
@@ -69,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
     convertBtn.addEventListener('click', async () => {
         if (!currentFile) return;
 
+        const conversionType = document.getElementById('conversion-type').value;
+
         convertBtn.disabled = true;
         loader.classList.remove('hidden');
 
@@ -79,7 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/api/process-image', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/octet-stream'
+                    'Content-Type': 'application/octet-stream',
+                    'X-Conversion-Type': conversionType
                 },
                 body: buffer
             });
@@ -93,8 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Create URL for preview and download
             const objectUrl = URL.createObjectURL(resultBlob);
+            
+            // If it's a PDF, we might not be able to preview it as an img, but img handles some PDFs in some browsers.
+            // For simplicity, we just use the img tag.
             convertedImage.src = objectUrl;
+            
+            // Set dynamic filename based on conversion type
+            let ext = "jpg";
+            if (conversionType === "to-png") ext = "png";
+            else if (conversionType === "to-pdf") ext = "pdf";
+            
             downloadLink.href = objectUrl;
+            downloadLink.download = `converted.${ext}`;
             
             resultContainer.classList.remove('hidden');
             
