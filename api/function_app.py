@@ -6,6 +6,32 @@ import fitz  # PyMuPDF
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
+def apply_resize(image: Image.Image, req: func.HttpRequest) -> Image.Image:
+    resize_mode = req.headers.get("X-Resize-Mode", "none")
+    if resize_mode == "none":
+        return image
+        
+    try:
+        if resize_mode == "pixels":
+            width = int(req.headers.get("X-Resize-Width", image.width))
+            height = int(req.headers.get("X-Resize-Height", image.height))
+            # Only resize if dimensions are positive
+            if width > 0 and height > 0:
+                image = image.resize((width, height), Image.Resampling.LANCZOS)
+        elif resize_mode == "percent":
+            percent = float(req.headers.get("X-Resize-Percent", 100.0))
+            if percent > 0 and percent != 100.0:
+                width = int(image.width * (percent / 100.0))
+                height = int(image.height * (percent / 100.0))
+                # Minimum size of 1x1 to prevent errors
+                width = max(1, width)
+                height = max(1, height)
+                image = image.resize((width, height), Image.Resampling.LANCZOS)
+    except Exception as e:
+        logging.warning(f"Failed to apply resize: {e}")
+        
+    return image
+
 @app.route(route="process-image", methods=["POST"])
 def process_image(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Processing image request.')
@@ -29,16 +55,26 @@ def process_image(req: func.HttpRequest) -> func.HttpResponse:
             
             page = pdf_document.load_page(0)
             pix = page.get_pixmap(dpi=150)
-            output_stream.write(pix.tobytes("jpeg"))
+            
+            # For PDF, we load as image first, then apply resize
+            image = Image.open(io.BytesIO(pix.tobytes("jpeg")))
+            image = apply_resize(image, req)
+            
+            image.save(output_stream, format="JPEG", quality=90)
             output_stream.seek(0)
             mimetype = "image/jpeg"
             pdf_document.close()
         else:
             image = Image.open(io.BytesIO(image_bytes))
             
+            # Apply resolution resize first
+            image = apply_resize(image, req)
+            
             if conversion_type == "grayscale":
                 image = image.convert('L')
-                image.thumbnail((1200, 1200))
+                # Legacy max size fallback only if no resize was explicitly requested
+                if req.headers.get("X-Resize-Mode", "none") == "none":
+                    image.thumbnail((1200, 1200)) 
                 image.save(output_stream, format="JPEG", quality=85)
                 mimetype = "image/jpeg"
                 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Azure SWA Image Conversion App">
-    <title>FlowPixel | Image Conversion</title>
+    <title>FlowPixel | Premium Image Conversion</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -14,8 +14,11 @@
     <div class="container">
         <!-- Hero / App Section -->
         <header>
-            <h1>FlowPixel</h1>
-            <p>Sleek and fast image conversion powered by Azure.</p>
+            <div class="header-title">
+                <img src="assets/logo.png" alt="FlowPixel Logo" class="logo">
+                <h1>FlowPixel</h1>
+            </div>
+            <p>Sleek, fast, and premium image conversion powered by Azure.</p>
         </header>
 
         <main class="glass-panel main-app">
@@ -29,9 +32,9 @@
             </div>
 
             <div class="preview-section hidden" id="preview-section">
-                <div class="image-container">
+                <div class="image-container perspective-container">
                     <h3>Original</h3>
-                    <img id="original-image" alt="Original Image">
+                    <img id="original-image" class="flip-card" alt="Original Image">
                 </div>
                 
                 <div class="action-bar">
@@ -66,9 +69,28 @@
                             <span>Grayscale</span>
                         </label>
                     </div>
+
+                    <!-- Resolution UI -->
+                    <div class="resolution-panel mt-4">
+                        <h3>Resize Image (Optional)</h3>
+                        <div class="resize-options">
+                            <label><input type="radio" name="resize-mode" value="none" checked> No Change</label>
+                            <label><input type="radio" name="resize-mode" value="pixels"> By Pixels</label>
+                            <label><input type="radio" name="resize-mode" value="percent"> By Percent</label>
+                        </div>
+                        <div id="resize-pixels-inputs" class="resize-inputs hidden">
+                            <input type="number" id="resize-width" placeholder="Width (px)">
+                            <span class="x-divider">×</span>
+                            <input type="number" id="resize-height" placeholder="Height (px)">
+                        </div>
+                        <div id="resize-percent-inputs" class="resize-inputs hidden">
+                            <input type="range" id="resize-percent-slider" min="1" max="200" value="50">
+                            <span id="resize-percent-display">50%</span>
+                        </div>
+                    </div>
                     
                     <button id="convert-btn" class="primary-btn mt-4">Convert Now</button>
-                    <div id="loader" class="loader hidden"></div>
+                    <div id="loader" class="loader-3d hidden"></div>
                 </div>
 
                 <div class="image-container hidden" id="result-container">
@@ -84,19 +106,22 @@
             <h2>How to Convert Images</h2>
             <div class="steps-grid">
                 <div class="step">
+                    <img src="assets/step1.png" alt="Upload" class="step-img">
                     <div class="step-num">1</div>
                     <h3>Upload File</h3>
                     <p>Drag and drop your image or PDF into the upload box at the top, or click to browse files from your device.</p>
                 </div>
                 <div class="step">
+                    <img src="assets/step2.png" alt="Select" class="step-img">
                     <div class="step-num">2</div>
-                    <h3>Select Format</h3>
-                    <p>Choose your desired output format from our selection grid. We support converting images to WebP, PDF, PNG, and more!</p>
+                    <h3>Select Format & Size</h3>
+                    <p>Choose your desired output format from our selection grid, and optionally adjust the resolution by pixels or percentage.</p>
                 </div>
                 <div class="step">
+                    <img src="assets/step3.png" alt="Download" class="step-img">
                     <div class="step-num">3</div>
                     <h3>Download</h3>
-                    <p>Click "Convert Now" and wait a few seconds. Once processed, click the download button to save your new file.</p>
+                    <p>Click "Convert Now" to watch our 3D processing engine run. Once processed, save your new file instantly.</p>
                 </div>
             </div>
         </section>
@@ -121,12 +146,6 @@
                     <button class="faq-question">What does Color Grading do?</button>
                     <div class="faq-answer">
                         <p>The Color Grade option algorithmically enhances the vibrancy and contrast of your photos, giving them a rich, cinematic look automatically.</p>
-                    </div>
-                </div>
-                <div class="faq-item">
-                    <button class="faq-question">How does PDF to JPG work?</button>
-                    <div class="faq-answer">
-                        <p>When you upload a multi-page PDF document, our system extracts the very first page and converts it into a high-quality JPG image.</p>
                     </div>
                 </div>
             </div>

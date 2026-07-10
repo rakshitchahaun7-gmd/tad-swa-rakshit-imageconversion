@@ -16,19 +16,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const optionCards = document.querySelectorAll('.option-card');
     const faqQuestions = document.querySelectorAll('.faq-question');
 
+    // Resize UI Elements
+    const resizeRadios = document.querySelectorAll('input[name="resize-mode"]');
+    const pixelsInputs = document.getElementById('resize-pixels-inputs');
+    const percentInputs = document.getElementById('resize-percent-inputs');
+    const percentSlider = document.getElementById('resize-percent-slider');
+    const percentDisplay = document.getElementById('resize-percent-display');
+    const widthInput = document.getElementById('resize-width');
+    const heightInput = document.getElementById('resize-height');
+
     let currentFile = null;
+    let originalImageObj = new Image();
 
     // Handle Option Cards
     optionCards.forEach(card => {
         card.addEventListener('click', () => {
-            // Remove active from all
             optionCards.forEach(c => c.classList.remove('active'));
-            // Add active to clicked
             card.classList.add('active');
-            // Ensure radio is checked
             const radio = card.querySelector('input[type="radio"]');
             if (radio) radio.checked = true;
         });
+    });
+
+    // Handle Resize UI
+    resizeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const mode = e.target.value;
+            pixelsInputs.classList.add('hidden');
+            percentInputs.classList.add('hidden');
+            
+            if (mode === 'pixels') {
+                pixelsInputs.classList.remove('hidden');
+            } else if (mode === 'percent') {
+                percentInputs.classList.remove('hidden');
+            }
+        });
+    });
+
+    percentSlider.addEventListener('input', (e) => {
+        percentDisplay.textContent = `${e.target.value}%`;
     });
 
     // Handle FAQs
@@ -36,14 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         question.addEventListener('click', () => {
             const item = question.parentElement;
             const isOpen = item.classList.contains('open');
-            
-            // Close all items
             document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-            
-            // Toggle current
-            if (!isOpen) {
-                item.classList.add('open');
-            }
+            if (!isOpen) item.classList.add('open');
         });
     });
 
@@ -60,13 +80,11 @@ document.addEventListener('DOMContentLoaded', () => {
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('dragover');
-        
         if (e.dataTransfer.files.length > 0) {
             handleFile(e.dataTransfer.files[0]);
         }
     });
 
-    // Handle Click to Browse
     browseBtn.addEventListener('click', () => {
         fileInput.click();
     });
@@ -85,10 +103,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         currentFile = file;
         
-        // Display Original Image
+        // Display Original Image and prefill resolution
         const reader = new FileReader();
         reader.onload = (e) => {
             originalImage.src = e.target.result;
+            
+            // Set image to get native resolution
+            originalImageObj.src = e.target.result;
+            originalImageObj.onload = () => {
+                widthInput.value = originalImageObj.width;
+                heightInput.value = originalImageObj.height;
+            };
+
             dropZone.classList.add('hidden');
             previewSection.classList.remove('hidden');
             resultContainer.classList.add('hidden');
@@ -101,22 +127,36 @@ document.addEventListener('DOMContentLoaded', () => {
     convertBtn.addEventListener('click', async () => {
         if (!currentFile) return;
 
-        // Get selected conversion type from checked radio button
         const checkedRadio = document.querySelector('input[name="conversion-type"]:checked');
         const conversionType = checkedRadio ? checkedRadio.value : 'to-jpg';
+        
+        const resizeMode = document.querySelector('input[name="resize-mode"]:checked').value;
 
         convertBtn.disabled = true;
         loader.classList.remove('hidden');
+        
+        // Add 3D Flip animation to original image while processing
+        originalImage.classList.add('is-processing');
 
         try {
             const buffer = await currentFile.arrayBuffer();
 
+            const headers = {
+                'Content-Type': 'application/octet-stream',
+                'X-Conversion-Type': conversionType,
+                'X-Resize-Mode': resizeMode
+            };
+
+            if (resizeMode === 'pixels') {
+                headers['X-Resize-Width'] = widthInput.value;
+                headers['X-Resize-Height'] = heightInput.value;
+            } else if (resizeMode === 'percent') {
+                headers['X-Resize-Percent'] = percentSlider.value;
+            }
+
             const response = await fetch('/api/process-image', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/octet-stream',
-                    'X-Conversion-Type': conversionType
-                },
+                headers: headers,
                 body: buffer
             });
 
@@ -139,12 +179,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             resultContainer.classList.remove('hidden');
             
-            // Scroll down to the result smoothly
-            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Allow 3D animation to finish a cycle smoothly before stopping
+            setTimeout(() => {
+                originalImage.classList.remove('is-processing');
+                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 500);
             
         } catch (error) {
             console.error('Error during image conversion:', error);
             alert('An error occurred while converting the image. Please try again.');
+            originalImage.classList.remove('is-processing');
         } finally {
             convertBtn.disabled = false;
             loader.classList.add('hidden');
