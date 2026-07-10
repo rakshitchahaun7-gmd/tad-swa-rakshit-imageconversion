@@ -7,22 +7,23 @@
     <title>FlowPixel | Image Conversion</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
+        <!-- Hero / App Section -->
         <header>
             <h1>FlowPixel</h1>
-            <p>Sleek and fast image conversion powered by Azure & Pillow.</p>
+            <p>Sleek and fast image conversion powered by Azure.</p>
         </header>
 
-        <main class="glass-panel">
+        <main class="glass-panel main-app">
             <div class="upload-section" id="drop-zone">
                 <input type="file" id="file-input" accept="image/*,application/pdf" hidden>
                 <div class="upload-content">
                     <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    <p>Drag and drop an image here</p>
+                    <p>Drag and drop a file here</p>
                     <span>or <button id="browse-btn">browse files</button></span>
                 </div>
             </div>
@@ -34,24 +35,106 @@
                 </div>
                 
                 <div class="action-bar">
-                    <select id="conversion-type" class="glass-select">
-                        <option value="grayscale">To Grayscale (JPEG)</option>
-                        <option value="to-pdf">Image to PDF</option>
-                        <option value="pdf-to-jpg">PDF to JPG</option>
-                        <option value="to-png">To PNG</option>
-                        <option value="to-jpg">To JPG</option>
-                    </select>
-                    <button id="convert-btn" class="primary-btn">Convert</button>
+                    <h3>Select Conversion Format</h3>
+                    <div class="options-grid" id="options-grid">
+                        <label class="option-card active">
+                            <input type="radio" name="conversion-type" value="to-jpg" checked hidden>
+                            <span>To JPG</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="conversion-type" value="to-png" hidden>
+                            <span>To PNG</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="conversion-type" value="to-webp" hidden>
+                            <span>To WebP</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="conversion-type" value="to-pdf" hidden>
+                            <span>Image to PDF</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="conversion-type" value="pdf-to-jpg" hidden>
+                            <span>PDF to JPG</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="conversion-type" value="color-grade" hidden>
+                            <span>Color Grade</span>
+                        </label>
+                        <label class="option-card">
+                            <input type="radio" name="conversion-type" value="grayscale" hidden>
+                            <span>Grayscale</span>
+                        </label>
+                    </div>
+                    
+                    <button id="convert-btn" class="primary-btn mt-4">Convert Now</button>
                     <div id="loader" class="loader hidden"></div>
                 </div>
 
                 <div class="image-container hidden" id="result-container">
                     <h3>Converted Result</h3>
                     <img id="converted-image" alt="Converted Image">
-                    <a id="download-link" class="secondary-btn" download="converted-image.jpg">Download Image</a>
+                    <a id="download-link" class="secondary-btn" download="converted.jpg">Download File</a>
                 </div>
             </div>
         </main>
+
+        <!-- Instructions Section -->
+        <section class="glass-panel" id="instructions">
+            <h2>How to Convert Images</h2>
+            <div class="steps-grid">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <h3>Upload File</h3>
+                    <p>Drag and drop your image or PDF into the upload box at the top, or click to browse files from your device.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <h3>Select Format</h3>
+                    <p>Choose your desired output format from our selection grid. We support converting images to WebP, PDF, PNG, and more!</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <h3>Download</h3>
+                    <p>Click "Convert Now" and wait a few seconds. Once processed, click the download button to save your new file.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section class="glass-panel" id="faq">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <button class="faq-question">What file types are supported?</button>
+                    <div class="faq-answer">
+                        <p>We support standard raster images like JPG, PNG, and WebP, as well as PDF documents. We currently do not support SVG vectorization.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">Is my data secure?</button>
+                    <div class="faq-answer">
+                        <p>Yes. Your files are processed in real-time in memory by Azure Functions and are never saved permanently to a disk or server.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">What does Color Grading do?</button>
+                    <div class="faq-answer">
+                        <p>The Color Grade option algorithmically enhances the vibrancy and contrast of your photos, giving them a rich, cinematic look automatically.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question">How does PDF to JPG work?</button>
+                    <div class="faq-answer">
+                        <p>When you upload a multi-page PDF document, our system extracts the very first page and converts it into a high-quality JPG image.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>&copy; 2026 FlowPixel. Built on Azure SWA.</p>
+        </footer>
     </div>
     <script src="script.js"></script>
 </body>

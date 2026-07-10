@@ -1,6 +1,6 @@
 import azure.functions as func
 import logging
-from PIL import Image
+from PIL import Image, ImageEnhance
 import io
 import fitz  # PyMuPDF
 
@@ -11,7 +11,6 @@ def process_image(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Processing image request.')
 
     try:
-        # The frontend will send the raw file bytes in the request body
         image_bytes = req.get_body()
         if not image_bytes:
             return func.HttpResponse(
@@ -24,20 +23,17 @@ def process_image(req: func.HttpRequest) -> func.HttpResponse:
         mimetype = "image/jpeg"
 
         if conversion_type == "pdf-to-jpg":
-            # Handle PDF to JPG
             pdf_document = fitz.open(stream=image_bytes, filetype="pdf")
             if pdf_document.page_count == 0:
                 return func.HttpResponse("PDF is empty.", status_code=400)
             
-            page = pdf_document.load_page(0) # First page
-            pix = page.get_pixmap(dpi=150) # High quality image
+            page = pdf_document.load_page(0)
+            pix = page.get_pixmap(dpi=150)
             output_stream.write(pix.tobytes("jpeg"))
             output_stream.seek(0)
             mimetype = "image/jpeg"
             pdf_document.close()
-
         else:
-            # All other conversions assume the input is an Image
             image = Image.open(io.BytesIO(image_bytes))
             
             if conversion_type == "grayscale":
@@ -61,13 +57,32 @@ def process_image(req: func.HttpRequest) -> func.HttpResponse:
                     image = image.convert('RGB')
                 image.save(output_stream, format="JPEG", quality=85)
                 mimetype = "image/jpeg"
+
+            elif conversion_type == "to-webp":
+                if image.mode == 'RGBA':
+                    image.save(output_stream, format="WEBP", lossless=False, quality=90)
+                else:
+                    image.save(output_stream, format="WEBP", quality=90)
+                mimetype = "image/webp"
+
+            elif conversion_type == "color-grade":
+                # Enhance Color (Vibrancy)
+                converter = ImageEnhance.Color(image)
+                image = converter.enhance(1.4)
+                # Enhance Contrast
+                converter = ImageEnhance.Contrast(image)
+                image = converter.enhance(1.1)
+                
+                if image.mode == 'RGBA':
+                    image = image.convert('RGB')
+                image.save(output_stream, format="JPEG", quality=90)
+                mimetype = "image/jpeg"
                 
             else:
                 return func.HttpResponse("Invalid conversion type.", status_code=400)
 
             output_stream.seek(0)
         
-        # Return the processed file
         return func.HttpResponse(
             body=output_stream.read(),
             mimetype=mimetype,

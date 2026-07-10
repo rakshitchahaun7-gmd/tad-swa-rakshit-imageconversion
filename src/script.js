@@ -13,7 +13,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const convertedImage = document.getElementById('converted-image');
     const downloadLink = document.getElementById('download-link');
 
+    const optionCards = document.querySelectorAll('.option-card');
+    const faqQuestions = document.querySelectorAll('.faq-question');
+
     let currentFile = null;
+
+    // Handle Option Cards
+    optionCards.forEach(card => {
+        card.addEventListener('click', () => {
+            // Remove active from all
+            optionCards.forEach(c => c.classList.remove('active'));
+            // Add active to clicked
+            card.classList.add('active');
+            // Ensure radio is checked
+            const radio = card.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        });
+    });
+
+    // Handle FAQs
+    faqQuestions.forEach(question => {
+        question.addEventListener('click', () => {
+            const item = question.parentElement;
+            const isOpen = item.classList.contains('open');
+            
+            // Close all items
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+            
+            // Toggle current
+            if (!isOpen) {
+                item.classList.add('open');
+            }
+        });
+    });
 
     // Handle Drag & Drop
     dropZone.addEventListener('dragover', (e) => {
@@ -69,13 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
     convertBtn.addEventListener('click', async () => {
         if (!currentFile) return;
 
-        const conversionType = document.getElementById('conversion-type').value;
+        // Get selected conversion type from checked radio button
+        const checkedRadio = document.querySelector('input[name="conversion-type"]:checked');
+        const conversionType = checkedRadio ? checkedRadio.value : 'to-jpg';
 
         convertBtn.disabled = true;
         loader.classList.remove('hidden');
 
         try {
-            // Read file as ArrayBuffer for binary transfer
             const buffer = await currentFile.arrayBuffer();
 
             const response = await fetch('/api/process-image', {
@@ -91,31 +124,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(`Server responded with status ${response.status}`);
             }
 
-            // Get response as Blob
             const resultBlob = await response.blob();
-            
-            // Create URL for preview and download
             const objectUrl = URL.createObjectURL(resultBlob);
             
-            // If it's a PDF, we might not be able to preview it as an img, but img handles some PDFs in some browsers.
-            // For simplicity, we just use the img tag.
             convertedImage.src = objectUrl;
             
-            // Set dynamic filename based on conversion type
             let ext = "jpg";
             if (conversionType === "to-png") ext = "png";
             else if (conversionType === "to-pdf") ext = "pdf";
+            else if (conversionType === "to-webp") ext = "webp";
             
             downloadLink.href = objectUrl;
             downloadLink.download = `converted.${ext}`;
             
             resultContainer.classList.remove('hidden');
             
+            // Scroll down to the result smoothly
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
         } catch (error) {
             console.error('Error during image conversion:', error);
             alert('An error occurred while converting the image. Please try again.');
-            convertBtn.disabled = false;
         } finally {
+            convertBtn.disabled = false;
             loader.classList.add('hidden');
         }
     });
