@@ -34,6 +34,101 @@ body {
     overflow-x: hidden;
 }
 
+/* Privacy Toggle & Metadata Viewer */
+.privacy-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem 1.5rem;
+    border-radius: 0.75rem;
+    width: 100%;
+}
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: .4s;
+}
+.toggle-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+.toggle-switch input:checked + .slider {
+    background-color: #4ade80;
+}
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(22px);
+}
+.toggle-switch .slider.round {
+    border-radius: 34px;
+}
+.toggle-switch .slider.round:before {
+    border-radius: 50%;
+}
+.toggle-label strong {
+    display: block;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+.toggle-label p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+.metadata-panel {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: left;
+}
+.metadata-panel h4 {
+    margin-bottom: 0.8rem;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+}
+.metadata-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.metadata-tag {
+    background: rgba(96, 165, 250, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    color: #93c5fd;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+.metadata-tag strong {
+    color: white;
+}
+.text-muted {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+.mb-4 { margin-bottom: 1.5rem; }
+
 /* Custom Cursor */
 .custom-cursor {
     position: fixed;

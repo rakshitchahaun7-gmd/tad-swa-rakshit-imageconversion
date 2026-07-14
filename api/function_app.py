@@ -45,6 +45,8 @@ def process_image(req: func.HttpRequest) -> func.HttpResponse:
             )
 
         conversion_type = req.headers.get("X-Conversion-Type", "grayscale")
+        keep_exif = req.headers.get("X-Keep-Exif", "false").lower() == "true"
+        
         output_stream = io.BytesIO()
         mimetype = "image/jpeg"
 
@@ -67,38 +69,52 @@ def process_image(req: func.HttpRequest) -> func.HttpResponse:
         else:
             image = Image.open(io.BytesIO(image_bytes))
             
+            # Extract EXIF before resizing (as resizing can drop it on some objects depending on implementation)
+            exif_data = image.info.get("exif") if keep_exif else None
+            
             # Apply resolution resize first
             image = apply_resize(image, req)
             
+            # Setup save parameters (to dynamically include exif if requested)
+            save_kwargs = {}
+            if exif_data:
+                save_kwargs['exif'] = exif_data
+
             if conversion_type == "grayscale":
                 image = image.convert('L')
                 # Legacy max size fallback only if no resize was explicitly requested
                 if req.headers.get("X-Resize-Mode", "none") == "none":
                     image.thumbnail((1200, 1200)) 
-                image.save(output_stream, format="JPEG", quality=85)
+                image.save(output_stream, format="JPEG", quality=85, **save_kwargs)
                 mimetype = "image/jpeg"
                 
             elif conversion_type == "to-pdf":
                 if image.mode == 'RGBA':
                     image = image.convert('RGB')
-                image.save(output_stream, format="PDF", resolution=100.0)
+                image.save(output_stream, format="PDF", resolution=100.0) # PDF doesn't easily embed EXIF like JPEG
                 mimetype = "application/pdf"
                 
             elif conversion_type == "to-png":
-                image.save(output_stream, format="PNG")
+                # PNG uses a different metadata chunk (pnginfo), but modern pillow can sometimes handle it.
+                # Since keeping EXIF is rarely needed for PNG web use, we'll gracefully fallback without kwargs if it crashes, 
+                # but standard save ignores `exif` kwarg on PNG safely in newer Pillow versions.
+                try:
+                    image.save(output_stream, format="PNG", **save_kwargs)
+                except Exception:
+                    image.save(output_stream, format="PNG")
                 mimetype = "image/png"
                 
             elif conversion_type == "to-jpg":
                 if image.mode == 'RGBA':
                     image = image.convert('RGB')
-                image.save(output_stream, format="JPEG", quality=85)
+                image.save(output_stream, format="JPEG", quality=85, **save_kwargs)
                 mimetype = "image/jpeg"
 
             elif conversion_type == "to-webp":
                 if image.mode == 'RGBA':
-                    image.save(output_stream, format="WEBP", lossless=False, quality=90)
+                    image.save(output_stream, format="WEBP", lossless=False, quality=90, **save_kwargs)
                 else:
-                    image.save(output_stream, format="WEBP", quality=90)
+                    image.save(output_stream, format="WEBP", quality=90, **save_kwargs)
                 mimetype = "image/webp"
 
             elif conversion_type == "color-grade":
@@ -111,7 +127,7 @@ def process_image(req: func.HttpRequest) -> func.HttpResponse:
                 
                 if image.mode == 'RGBA':
                     image = image.convert('RGB')
-                image.save(output_stream, format="JPEG", quality=90)
+                image.save(output_stream, format="JPEG", quality=90, **save_kwargs)
                 mimetype = "image/jpeg"
                 
             else:

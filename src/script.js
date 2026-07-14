@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Existing Elements
     const dropZone = document.getElementById('drop-zone');
+    const stripExifToggle = document.getElementById('strip-exif-toggle');
+    const metadataContent = document.getElementById('metadata-content');
     const fileInput = document.getElementById('file-input');
     const browseBtn = document.getElementById('browse-btn');
     const previewSection = document.getElementById('preview-section');
@@ -179,6 +181,37 @@ document.addEventListener('DOMContentLoaded', () => {
             previewSection.classList.remove('hidden');
             resultContainer.classList.add('hidden');
             convertBtn.disabled = false;
+            
+            // Extract EXIF
+            if (file.type.startsWith('image/') && typeof EXIF !== 'undefined') {
+                EXIF.getData(file, function() {
+                    const allTags = EXIF.getAllTags(this);
+                    metadataContent.innerHTML = ''; // Clear loading text
+                    
+                    // Filter useful tags
+                    const usefulKeys = ['Make', 'Model', 'DateTime', 'GPSLatitude', 'GPSLongitude', 'Software', 'ExifVersion'];
+                    let foundAny = false;
+                    
+                    for (const key of usefulKeys) {
+                        if (allTags[key]) {
+                            foundAny = true;
+                            let val = allTags[key];
+                            if (val.length > 30) val = val.substring(0, 30) + '...'; // Truncate long strings
+                            
+                            const tagEl = document.createElement('div');
+                            tagEl.className = 'metadata-tag';
+                            tagEl.innerHTML = `<strong>${key}:</strong> ${val}`;
+                            metadataContent.appendChild(tagEl);
+                        }
+                    }
+                    
+                    if (!foundAny) {
+                        metadataContent.innerHTML = '<span class="text-muted">No hidden EXIF data found.</span>';
+                    }
+                });
+            } else {
+                metadataContent.innerHTML = '<span class="text-muted">Metadata extraction not supported for this file type.</span>';
+            }
         };
         reader.readAsDataURL(file);
     }
@@ -237,10 +270,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const buffer = await currentFile.arrayBuffer();
 
+            const keepExif = !stripExifToggle.checked;
+            
             const headers = {
                 'Content-Type': 'application/octet-stream',
                 'X-Conversion-Type': conversionType,
-                'X-Resize-Mode': resizeMode
+                'X-Resize-Mode': resizeMode,
+                'X-Keep-Exif': keepExif.toString()
             };
 
             if (resizeMode === 'pixels') {
