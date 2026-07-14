@@ -15,6 +15,8 @@
     <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
     <!-- EXIF JS -->
     <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <!-- JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
     <!-- Custom Cursor -->
@@ -36,16 +38,17 @@
 
         <main class="glass-panel main-app">
             <div class="upload-section hoverable" id="drop-zone">
-                <input type="file" id="file-input" accept="image/*,application/pdf" hidden>
+                <input type="file" id="file-input" accept="image/*,application/pdf" multiple hidden>
                 <div class="upload-content">
                     <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    <p>Drag and drop a file here</p>
+                    <p>Drag and drop files here (Batch Upload Supported)</p>
                     <span>or <button id="browse-btn" class="hoverable">browse files</button></span>
                 </div>
             </div>
 
             <div class="preview-section hidden" id="preview-section">
-                <div class="image-container perspective-container">
+                <!-- Single Mode Preview -->
+                <div class="image-container perspective-container hidden" id="single-preview">
                     <h3>Original</h3>
                     <img id="original-image" class="flip-card" alt="Original Image">
                     
@@ -56,6 +59,14 @@
                             <!-- EXIF tags will be injected here -->
                             <p class="text-muted">Scanning...</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Batch Mode Preview -->
+                <div class="batch-preview hidden" id="batch-preview">
+                    <h3>Batch Queue (<span id="batch-count">0</span> files)</h3>
+                    <div class="batch-grid" id="batch-grid">
+                        <!-- Thumbnails injected here -->
                     </div>
                 </div>
                 
@@ -123,7 +134,7 @@
                         </div>
                     </div>
                     
-                    <button id="convert-btn" class="primary-btn hoverable mt-4">Convert Now</button>
+                    <button id="convert-btn" class="primary-btn hoverable mt-4"><span id="convert-btn-text">Convert Now</span></button>
                     <div id="loader" class="loader-3d hidden"></div>
                 </div>
 
@@ -159,6 +170,11 @@
                             <span class="stat-value" id="stat-savings">0% 🎉</span>
                         </div>
                     </div>
+
+                    <!-- Batch Result Message -->
+                    <div class="batch-result hidden" id="batch-result">
+                        <p class="success-text" style="color: #4ade80; font-size: 1.2rem; margin-bottom: 1rem;">✅ All files processed successfully!</p>
+                    </div>
                     
                     <a id="download-link" class="secondary-btn hoverable mt-4" download="converted.jpg">Download File</a>
                 </div>
@@ -172,20 +188,20 @@
                 <div class="step">
                     <img src="assets/step1.png" alt="Upload" class="step-img hoverable">
                     <div class="step-num">1</div>
-                    <h3>Upload File</h3>
-                    <p>Drag and drop your image or PDF into the upload box at the top, or click to browse files from your device.</p>
+                    <h3>Upload File(s)</h3>
+                    <p>Drag and drop a single image or an entire batch of files into the upload box at the top.</p>
                 </div>
                 <div class="step">
                     <img src="assets/step2.png" alt="Select" class="step-img hoverable">
                     <div class="step-num">2</div>
                     <h3>Select Format & Size</h3>
-                    <p>Choose your desired output format from our selection grid, and optionally adjust the resolution by pixels or percentage.</p>
+                    <p>Choose your desired output format, optionally adjust the resolution, and configure privacy metadata settings.</p>
                 </div>
                 <div class="step">
                     <img src="assets/step3.png" alt="Download" class="step-img hoverable">
                     <div class="step-num">3</div>
                     <h3>Download</h3>
-                    <p>Click "Convert Now" to watch our 3D processing engine run. Once processed, save your new file instantly.</p>
+                    <p>Click "Convert" to watch our 3D processing engine run. Save your single file or download a ZIP archive for batches.</p>
                 </div>
             </div>
         </section>
